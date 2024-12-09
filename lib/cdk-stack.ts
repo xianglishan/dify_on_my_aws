@@ -18,7 +18,12 @@ import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as secret from 'aws-cdk-lib/aws-secretsmanager';
 import * as path from 'path';
 
+import 'dotenv/config';
+
 export class CdkStack extends cdk.Stack {
+
+  private readonly DOMAIN = process.env.DOMAIN
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -142,15 +147,15 @@ export class CdkStack extends cdk.Stack {
 
     // Route 53のホストゾーンを参照
     const hostedZone = route53.HostedZone.fromLookup(this, 'HostedZone', {
-      domainName: 'dify.xianglishan.jp'
+      domainName: this.DOMAIN!
     });
 
     // ACM証明書の作成
     const certificate = new acm.Certificate(this, 'Certificate', {
-      domainName: 'dify.xianglishan.jp',
+      domainName: this.DOMAIN!,
       validation: acm.CertificateValidation.fromDns(hostedZone),
       subjectAlternativeNames: [
-        '*.dify.xianglishan.jp'
+        `*.${this.DOMAIN}`
       ],
     });
 
@@ -849,7 +854,7 @@ export class CdkStack extends cdk.Stack {
       target: route53.RecordTarget.fromAlias(
         new targets.LoadBalancerTarget(alb)
       ),
-      recordName: 'dify.xianglishan.jp'
+      recordName: this.DOMAIN
     });
 
     // APIルートの追加（優先順位の高い順に設定）
